@@ -5,9 +5,9 @@ using UnityEngine.UI;
 
 public class MaintenanceManager : MonoBehaviour
 {
-    [SerializeField] public GameManager gameManager;                // Variable referencia al GameObject del tipo GameManager
-    [SerializeField] public GameObject maintenanceButton;           // Variable referencia al panel de canvas del mantenimiento
-    [SerializeField] public TextMeshProUGUI maintenanceInfo;        // Variable referencia al texto del mantenimiento
+    [SerializeField] private GameManager gameManager;                // Variable referencia al GameObject del tipo GameManager
+    [SerializeField] private GameObject maintenanceButton;           // Variable referencia al panel de canvas del mantenimiento
+    [SerializeField] private TextMeshProUGUI maintenanceInfo;        // Variable referencia al texto del mantenimiento
 
     private Color normalColor;                                      // Variable referencia al color normal del botón de mantenimiento
     private string originalButtonText;                              // Variable referencia al texto original del botón de mantenimiento
@@ -56,18 +56,30 @@ public class MaintenanceManager : MonoBehaviour
     // Gestiona las tareas de mantenimiento de la central nuclear
     private void ActivateMaintenance()
     {
-        // Botón de mantenimiento inhabilitado
-        maintenanceExecute = false;
+        
+        // Obtiene las fallas acumuladas en la central nuclear
+        int _failures = gameManager.GetFailures();
 
-        // Cambia el color del botón de mantenimiento a verde
-        maintenanceButton.GetComponent<Image>().color = Color.green;
+        if (_failures > 10) 
+        {
+            // Botón de mantenimiento inhabilitado
+            maintenanceExecute = false;
 
-        // Cambia el texto del botón de mantenimiento
-        maintenanceButton.GetComponentInChildren<TextMeshProUGUI>().text = "ON";
+            // Cambia el color del botón de mantenimiento a verde
+            maintenanceButton.GetComponent<Image>().color = Color.green;
 
-        // Muestra el texto del mantenimiento
-        maintenanceInfo.text = "In maintenance"; 
-        maintenanceInfo.enabled = true;
+            // Cambia el texto del botón de mantenimiento
+            maintenanceButton.GetComponentInChildren<TextMeshProUGUI>().text = "ON";
+
+            // Muestra el texto info de mantenimiento
+            maintenanceInfo.text = "In maintenance";
+            maintenanceInfo.enabled = true;
+
+            // En GameManager reduce las fallas un %
+            _failures = - (int)(_failures * 0.5f);
+            gameManager.SetFailures(_failures);
+        }
+        
         
         // Después de 10 segundos, vuelve al color normal y ocultar el texto
         StartCoroutine(ResetMaintenanceIndicator(5f));
@@ -81,15 +93,15 @@ public class MaintenanceManager : MonoBehaviour
 
         // Si la cantidad de fallas > 2500 =>
         //      se reduce la cantidad de fallas un 10%
-        //      pasa al GameManager
         //      habilita el botón de mantenimiento
         
-        if (failures > 2500) 
+        if (failures > 500 && maintenanceExecute == true) 
         {
-            failures = (int)(failures * 0.9f);
-            
-            gameManager.SetFailures(failures);
-            
+            // Muestra el texto info de mantenimiento
+            maintenanceInfo.text = "Execute maintenance";
+            maintenanceInfo.enabled = true;
+
+            // Habilita la posibilidad de hacer clic en M
             maintenanceExecute = true;
         }
     }
@@ -97,7 +109,7 @@ public class MaintenanceManager : MonoBehaviour
     // Restablecer el indicador de mantenimiento después de cierto tiempo
     private IEnumerator ResetMaintenanceIndicator(float delay)
     {
-        // Retasa la ejecución un tiempo = delay
+        // Retrasa la ejecución un tiempo = delay
         yield return new WaitForSeconds(delay);
 
         // Vuelve al color normal del botón de mantenimiento

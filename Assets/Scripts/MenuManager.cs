@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
+    // Gestiona la selección y carga de la escena
     public void PlayNextScene()
     {
         /*
@@ -20,4 +21,13 @@ public class MenuManager : MonoBehaviour
         SceneManager.LoadScene(nextSceneIndex);
     }
 
+    // Gestiona el cierre de la aplicación
+    public void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
 }

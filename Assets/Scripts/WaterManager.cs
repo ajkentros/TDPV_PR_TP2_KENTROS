@@ -6,11 +6,11 @@ using UnityEngine.UI;
 
 public class WaterManager : MonoBehaviour
 {
-    [SerializeField] public GameManager gameManager;                // Variable referencia al GameObject del tipo GameManager
-    [SerializeField] public Slider waterIndicator;                  // Variable referencia al slider de agua refrigerante
-    [SerializeField] public GameObject waterButton;                 // Variable referencia al panel de canvas de agua refrigerante
-    [SerializeField] public TextMeshProUGUI waterTextLevel;         // Variable referencia al texto de nivel de enagua refrigeranteergía
-    [SerializeField] public float waterLevel = 60f;                 // Variable nivel de agua refrigerante inicial
+    [SerializeField] private GameManager gameManager;                // Variable referencia al GameObject del tipo GameManager
+    [SerializeField] private Slider waterIndicator;                  // Variable referencia al slider de agua refrigerante
+    [SerializeField] private GameObject waterButton;                 // Variable referencia al panel de canvas de agua refrigerante
+    [SerializeField] private TextMeshProUGUI waterTextLevel;         // Variable referencia al texto de nivel de enagua refrigeranteergía
+    [SerializeField] private float waterLevel = 60f;                 // Variable nivel de agua refrigerante inicial
 
     private float decreaseInterval = 20f;                   // Variable intervalo de tiempo entre disminuciones de agua refrigerante
     private float lastDecreaseTime = 0f;                    // Variable tiempo del último decremento de agua refrigerante
@@ -20,6 +20,7 @@ public class WaterManager : MonoBehaviour
     private const float minWater = 0f;                      // Variable mínimo de agua refrigerante
     private const float maxWater = 100f;                    // variable máximo de agua refrigerante
     private bool canChangeWater = false;                    // Variable cambia la agua refrigerante (false = botón sin accionar, true = botón accionado)
+    private bool canChangeStationWater;                     // Variable referencia al estado del agua de la central
 
 
     // Start is called before the first frame update
@@ -48,8 +49,11 @@ public class WaterManager : MonoBehaviour
             ChangeWaterButton();
         }
 
+        // Toma el estado de cambio del agua de la central
+        canChangeStationWater = gameManager.GetChangeStationWater();
+
         // Si se puede cambiar el nivel del agua refrigerante (canChangeWater = true) y se clic en flecha arriba o abajo => actualiza el nivel de agua refrigerante
-        if (canChangeWater && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
+        if (canChangeWater && canChangeStationWater && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
         {
             ChangeWater();
         }
@@ -99,11 +103,11 @@ public class WaterManager : MonoBehaviour
             gameManager.SetFailures(1);
 
         }
-        else if (waterLevel >= 25f)
+        else if (waterLevel >= 40f)
         {
             waterColor = Color.green;
         }
-        else if (waterLevel >= 15f)
+        else if (waterLevel >= 20f)
         {
             waterColor = Color.yellow;
             gameManager.SetFailures(1);
@@ -120,11 +124,44 @@ public class WaterManager : MonoBehaviour
     // Gestiona el botón EnergyButton
     private void ChangeWaterButton()
     {
+        // Toma control de la imagen del button para luego cambiar
+        Image waterButtonImage = waterButton.GetComponent<Image>();
+
+        // Toma el estado de cambio del agua de la central
+        bool canChangeStationEnergy = gameManager.GetChangeStationEnergy();
+
+        // Cambia el estado del agua (F a T o T a F)
         canChangeWater = !canChangeWater;
 
-        // Cambia el color del WaterButton según si se puede cambiar el nivel de agua refrigerante
-        Image waterButtonImage = waterButton.GetComponent<Image>();
-        waterButtonImage.color = canChangeWater ? Color.blue : Color.white;
+        // Si clic en A la central admite cambiar el agua => cambia el color del indicador de agua y se deshabilita el cambio del energía
+        if (canChangeWater && canChangeStationWater == true)
+        {
+            // Cambia a color azul el indicador de agua
+            waterButtonImage.color = Color.blue;
+
+            // Cambia el estado del agua de la central
+            gameManager.SetChangeStationEnergy(false);
+        }
+        
+        // Si clic en A = true y la central no admite cambiar el agua => se dehabilita el cambio de agua
+        if (canChangeWater == true && canChangeStationWater == false && canChangeStationEnergy == true)
+        {
+            canChangeWater = false;
+        }
+
+        // Si clic en A = falso => cambia el color del indicador del agua, habilita el cambio de Energía y deshabilita el cambio de agua
+        if (canChangeWater == false && canChangeStationWater == true && canChangeStationEnergy == false)
+        {
+            // Cambia a color blanco el indicador de agua
+            waterButtonImage.color = Color.white;
+
+            // Cambia el estado de la Energía de la central
+            gameManager.SetChangeStationEnergy(true);
+
+            // Cambia el estado del agua de la central
+            //gameManager.SetChangeStationWater(false);
+        }
+        Debug.Log("clic A " + "w=" + canChangeWater + " " + "ws=" + canChangeStationWater);
     }
 
     // Gestiona los niveles de agua refrigerante
@@ -140,11 +177,11 @@ public class WaterManager : MonoBehaviour
          */
         if (Input.GetKey(KeyCode.UpArrow))
         {
-            waterLevel += 0.8f;
+            waterLevel += 0.1f;
         }
         else if (Input.GetKey(KeyCode.DownArrow))
         {
-            waterLevel -= 0.8f;
+            waterLevel -= 0.1f;
         }
 
         waterLevel = Mathf.Clamp(waterLevel, minWater, maxWater);
@@ -201,6 +238,7 @@ public class WaterManager : MonoBehaviour
     {
         if(waterLevel > 99f || waterLevel < 1)
         {
+            // Setea la cantidad de fallas para que explote la central nuclear
             gameManager.SetFailures(5001);
         }else gameManager.SetStationWaterLevel(waterLevel);
     }

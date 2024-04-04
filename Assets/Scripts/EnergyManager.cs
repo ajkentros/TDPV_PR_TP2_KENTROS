@@ -6,11 +6,11 @@ using UnityEngine.UI;
 
 public class EnergyManager : MonoBehaviour
 {
-    [SerializeField] public GameManager gameManager;                 // Variable referencia al GameObject del tipo GameManager
-    [SerializeField] public Slider energyIndicator;                  // Variable referencia al slider de energía
-    [SerializeField] public GameObject energyButton;                 // Variable referencia al panel de canvas de energía
-    [SerializeField] public TextMeshProUGUI energyTextLevel;         // Variable referencia al texto de nivel de energía
-    [SerializeField] public float energyLevel = 50f;                 // Variable nivel de energía inicial
+    [SerializeField] private GameManager gameManager;                 // Variable referencia al GameObject del tipo GameManager
+    [SerializeField] private Slider energyIndicator;                  // Variable referencia al slider de energía
+    [SerializeField] private GameObject energyButton;                 // Variable referencia al panel de canvas de energía
+    [SerializeField] private TextMeshProUGUI energyTextLevel;         // Variable referencia al texto de nivel de energía
+    [SerializeField] private float energyLevel = 50f;                 // Variable nivel de energía inicial
 
     private float decreaseInterval = 10f;                  // Variable intervalo de tiempo entre disminuciones de Energía
     private float lastDecreaseTime = 0f;                   // Variable tiempo del último decremento de Energía
@@ -20,7 +20,7 @@ public class EnergyManager : MonoBehaviour
     private const float minEnergy = 0f;                    // Variable mínimo de energía
     private const float maxEnergy = 100f;                  // variable máximo de energía
     private bool canChangeEnergy = false;                  // Variable cambia la energía (false = botón sin accionar, true = botón accionado)
-   
+    private bool canChangeStationEnergy;                   // Variable referencia al estado de Energía de la central
 
     void Start()
     {
@@ -46,8 +46,11 @@ public class EnergyManager : MonoBehaviour
             ChangeEnergyButton();
         }
 
+        // Toma el estado de cambio de la Energía de la central
+        canChangeStationEnergy = gameManager.GetChangeStationEnergy();
+
         // Si se puede cambiar el nivel de la energía (canChangeEnergy = true) y se clic en flecha arriba o abajo => actualiza el nivel de energía
-        if (canChangeEnergy && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
+        if (canChangeEnergy && canChangeStationEnergy && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
         {
             ChangeEnergy();
         }
@@ -126,12 +129,47 @@ public class EnergyManager : MonoBehaviour
     // Gestiona el botón EnergyButton
     private void ChangeEnergyButton()
     {
+        // Toma control de la imagen del button para luego cambiar
+        Image energyButtonImage = energyButton.GetComponent<Image>();
+
+        // Toma el estado de cambio del agua de la central
+        bool canChangeStationWater = gameManager.GetChangeStationWater();
+
+
+        // Cambia el estado de la energía (F a T o T a F)
         canChangeEnergy = !canChangeEnergy;
 
-        // Cambia el color del EnergyButton según si se puede cambiar el nivel de Energía
-        Image energyButtonImage = energyButton.GetComponent<Image>();
-        energyButtonImage.color = canChangeEnergy ? Color.green : Color.white;
+   
+        //Si clic en E y la central admite cambiar la Energía => cambia el color del indicador de Energía y se deshabilita el cambio del agua
+        if(canChangeEnergy && canChangeStationEnergy == true)
+        {
+            // Cambia a color verde el indicador de Energía
+            energyButtonImage.color = Color.green;
 
+            // Cambia el estado del agua de la central
+            gameManager.SetChangeStationWater(false);
+        }
+
+        //Si clic en E = true y la central no admite cambiar la Energía => se dehabilita el cambio de Energía
+        if (canChangeEnergy == true && canChangeStationEnergy == false && canChangeStationWater == true)
+        {
+            canChangeEnergy = false;
+        }
+
+        // Si clic en E = falso => cambia el color del indicador de Energía, habilita el cambio del agua y deshabilita el cambio de Energía
+        if (canChangeEnergy == false && canChangeStationEnergy == true && canChangeStationWater == false)
+        {
+            // Cambia a color blanco el indicador de Energía
+            energyButtonImage.color = Color.white;
+
+            // Cambia el estado del agua de la central
+            gameManager.SetChangeStationWater(true);
+
+            // Cambia el estado de la Energía de la central
+            //gameManager.SetChangeStationEnergy(false);
+        }
+        Debug.Log("clic E "+"e=" + canChangeEnergy + " " + "es=" + canChangeStationEnergy);
+        
     }
 
     // Gestiona los niveles de Energía

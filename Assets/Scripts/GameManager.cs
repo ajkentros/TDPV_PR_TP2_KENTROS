@@ -6,14 +6,14 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] public Slider stationIndicator;               // Variable referencia al slider de la central nuclear
-    [SerializeField] public TextMeshProUGUI stationTextLevel;      // Variable referencia al texto del nivel de la central nuclear
-    [SerializeField] public TextMeshProUGUI useTimeText;           // Variable referencia al texto del tiempo transcurrido sin fallas
-    [SerializeField] public TextMeshProUGUI failuresText;          // Variable referencia al texto cantidad de fallas
+    [SerializeField] private Slider stationIndicator;               // Variable referencia al slider de la central nuclear
+    [SerializeField] private TextMeshProUGUI stationTextLevel;      // Variable referencia al texto del nivel de la central nuclear
+    [SerializeField] private TextMeshProUGUI useTimeText;           // Variable referencia al texto del tiempo transcurrido sin fallas
+    [SerializeField] private TextMeshProUGUI failuresText;          // Variable referencia al texto cantidad de fallas
 
-    [SerializeField] public GameObject stationPanel;                // Variable referencia al StationPanel
-    [SerializeField] public GameObject energyPanel;                 // Variable referencia al EnergyPanel
-    [SerializeField] public GameObject stationExplosionPanel;        // Variable referencia al StationExplosionPanel
+    [SerializeField] private GameObject stationPanel;                // Variable referencia al StationPanel
+    [SerializeField] private GameObject energyPanel;                 // Variable referencia al EnergyPanel
+    [SerializeField] private GameObject stationExplosionPanel;        // Variable referencia al StationExplosionPanel
 
     private float stationLifeTime = 0f;                             // Variable tiempo de vida de la central nuclear sin fallas
     private float stationLevel = 0f;                                // Variable nivel de la central nuclear (valor de la energía + agua + mantenimiento)
@@ -25,6 +25,8 @@ public class GameManager : MonoBehaviour
     private int hours = 0;                                          // Variable horas                              
     private int minutes = 0;                                        // Variable minutos    
     private int seconds = 0;                                        // Variable segundos    
+    private bool canChangeStationEnergy = true;                    // Variable para cambiar la Energía de la central nuclear
+    private bool canChangeStationWater = true;                    // Variable para cambiar el agua de la central nuclear
 
     // Start is called before the first frame update
     void Start()
@@ -116,10 +118,10 @@ public class GameManager : MonoBehaviour
     private void CheckGameState()
     {
         /*
-         * Si stationExplosion = true o cantidad de fallas >= 50
+         * 
+         * Si stationExplosion = true o cantidad de fallas >= 5000
          *      Avisar que la central nuclear explotó
          *      Reiniciar el juego
-         *   
          */
         
         if (stationLevel >= 95f || stationLevel < 2f || failures >= 5000)
@@ -164,7 +166,7 @@ public class GameManager : MonoBehaviour
     // Set fallas en la central nuclear
     public void SetFailures(int _failures)
     {
-        //failures += (int)(_failures / 2);
+        failures += (int)(_failures / 10);
         failures += _failures;
     }
 
@@ -197,8 +199,30 @@ public class GameManager : MonoBehaviour
         int nextSceneIndex = (currentSceneIndex - 1) % SceneManager.sceneCountInBuildSettings;
 
         SceneManager.LoadScene(nextSceneIndex);
-        
+    }
 
+    // Get ver cambiar la Energía de la central
+    public bool GetChangeStationEnergy()
+    {
+        return canChangeStationEnergy;
+    }
+
+    // Set para cambiar la Energía de la central
+    public void SetChangeStationEnergy(bool _canChangeStationEnergy)
+    {
+        canChangeStationEnergy = _canChangeStationEnergy;
+    }
+
+    // Get ver cambiar el agua de la central
+    public bool GetChangeStationWater()
+    {
+        return canChangeStationWater;
+    }
+
+    // Set para cambiar el agua de la central
+    public void SetChangeStationWater(bool _canChangeStationWater)
+    {
+        canChangeStationWater = _canChangeStationWater;
     }
 }
 

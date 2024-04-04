@@ -12,7 +12,7 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
+  companyName: TDPV_PR_TP2_KENTROS
   productName: TDPV_PR_TP2_KENTROS
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
