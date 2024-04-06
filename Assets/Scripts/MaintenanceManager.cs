@@ -30,14 +30,18 @@ public class MaintenanceManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Si clic en la tecla "M" => cambia el estado de la central nuclear y el color del MaintenanceButton
-        if (Input.GetKeyDown(KeyCode.M) && maintenanceExecute == true)
+        if (!gameManager.GetGamePaused())
         {
-            ActivateMaintenance();
-        }
+            // Si clic en la tecla "M" => cambia el estado de la central nuclear y el color del MaintenanceButton
+            if (Input.GetKeyDown(KeyCode.M) && maintenanceExecute == true)
+            {
+                ActivateMaintenance();
+            }
 
-        // Chequea si se necesita mantenimiento
-        CheckMaintenance();
+            // Chequea si se necesita mantenimiento
+            CheckMaintenance();
+        }
+            
     }
 
     // Inicia el mantenimineto

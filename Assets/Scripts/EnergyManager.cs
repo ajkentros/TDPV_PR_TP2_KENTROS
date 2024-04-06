@@ -40,32 +40,33 @@ public class EnergyManager : MonoBehaviour
 
     void Update()
     {
-        // Si clic en la tecla "E" => cambia el estado de canChangeEnergy y el color del EnergyButton
-        if (Input.GetKeyDown(KeyCode.E))
+        if(!gameManager.GetGamePaused())
         {
-            ChangeEnergyButton();
+            // Si clic en la tecla "E" => cambia el estado de canChangeEnergy y el color del EnergyButton
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                ChangeEnergyButton();
+            }
+
+            // Toma el estado de cambio de la Energía de la central
+            canChangeStationEnergy = gameManager.GetChangeStationEnergy();
+
+            // Si se puede cambiar el nivel de la energía (canChangeEnergy = true) y se clic en flecha arriba o abajo => actualiza el nivel de energía
+            if (canChangeEnergy && canChangeStationEnergy && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
+            {
+                ChangeEnergy();
+            }
+
+            // Actualiza el estado de la central nuclear
+            UpdateStationLevel();
+
+            // Actualiza el color del indicador de energía
+            UpdateEnergyIndicator();
+
+            // Gestiona el decremento de la Energía en función del tiempo
+            DecreaseEnergy();
         }
-
-        // Toma el estado de cambio de la Energía de la central
-        canChangeStationEnergy = gameManager.GetChangeStationEnergy();
-
-        // Si se puede cambiar el nivel de la energía (canChangeEnergy = true) y se clic en flecha arriba o abajo => actualiza el nivel de energía
-        if (canChangeEnergy && canChangeStationEnergy && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
-        {
-            ChangeEnergy();
-        }
-
-        // Actualiza el estado de la central nuclear
-        UpdateStationLevel();
-
-        // Actualiza el color del indicador de energía
-        UpdateEnergyIndicator();
-
-        // Gestiona el decremento de la Energía en función del tiempo
-        DecreaseEnergy();
-
-        // Calcula si hay falla por causa Energía
-        //EnergyFailures();
+        
     }
 
     // Inicia los valores del indicador de Energía
@@ -168,7 +169,7 @@ public class EnergyManager : MonoBehaviour
             // Cambia el estado de la Energía de la central
             //gameManager.SetChangeStationEnergy(false);
         }
-        Debug.Log("clic E "+"e=" + canChangeEnergy + " " + "es=" + canChangeStationEnergy);
+        //Debug.Log("clic E "+"e=" + canChangeEnergy + " " + "es=" + canChangeStationEnergy);
         
     }
 
@@ -212,12 +213,12 @@ public class EnergyManager : MonoBehaviour
         if (energyLevel >= 95f)
         {
             energyColor = Color.red;
-            gameManager.SetFailures(5);
+            gameManager.SetFailures(14);
         }
         else if (energyLevel >= 85f)
         {
             energyColor = Color.yellow;
-            gameManager.SetFailures(1);
+            gameManager.SetFailures(10);
 
         }
         else if (energyLevel >= 15f)
@@ -227,12 +228,12 @@ public class EnergyManager : MonoBehaviour
         else if (energyLevel >= 10f)
         {
             energyColor = Color.yellow;
-            gameManager.SetFailures(1);
+            gameManager.SetFailures(10);
         }
         else
         {
             energyColor = Color.red;
-            gameManager.SetFailures(5);
+            gameManager.SetFailures(14);
         }
         // Cambia el color del slider
         energyIndicator.fillRect.GetComponent<Image>().color = energyColor; ;
@@ -241,10 +242,11 @@ public class EnergyManager : MonoBehaviour
     // Actualiza el estado de la central nuclear
     private void UpdateStationLevel()
     {
-        if (energyLevel > 99f || energyLevel < 1)
+        if(energyLevel >= 100f || energyLevel <= 0f)
         {
-            gameManager.SetFailures(5001);
+            Debug.Log("aplotó la energía");
+            gameManager.SetExplotionstation(true);
         }
-        else gameManager.SetStationEnergyLevel(energyLevel);
+        gameManager.SetStationEnergyLevel(energyLevel);
     }
 }

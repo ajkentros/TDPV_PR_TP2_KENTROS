@@ -182,7 +182,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: "gestiona multitareas para que la Central Nuclear no explote\n\n* usa la
     E-> para gestionar la Energ\xEDa\n* usa la A-> para gestionar el Agua refrigerente\n*
-    usa la M-> para mantener la central"
+    usa la M-> para mantener la central\n* controls el estad cr\xEDtico de la central"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

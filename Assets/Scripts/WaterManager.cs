@@ -43,29 +43,33 @@ public class WaterManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Si clic en la tecla "A" => cambia el estado de canChangeWater y el color del WaterButton
-        if (Input.GetKeyDown(KeyCode.A))
+        if (!gameManager.GetGamePaused())
         {
-            ChangeWaterButton();
+            // Si clic en la tecla "A" => cambia el estado de canChangeWater y el color del WaterButton
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                ChangeWaterButton();
+            }
+
+            // Toma el estado de cambio del agua de la central
+            canChangeStationWater = gameManager.GetChangeStationWater();
+
+            // Si se puede cambiar el nivel del agua refrigerante (canChangeWater = true) y se clic en flecha arriba o abajo => actualiza el nivel de agua refrigerante
+            if (canChangeWater && canChangeStationWater && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
+            {
+                ChangeWater();
+            }
+
+            // Actualiza el estado de la central nuclear
+            UpdateStationLevel();
+
+            // Actualiza el color del indicador de energía
+            UpdateWaterIndicator();
+
+            // Gestiona el decremento de la Energía en función del tiempo
+            DecreaseWater();
         }
-
-        // Toma el estado de cambio del agua de la central
-        canChangeStationWater = gameManager.GetChangeStationWater();
-
-        // Si se puede cambiar el nivel del agua refrigerante (canChangeWater = true) y se clic en flecha arriba o abajo => actualiza el nivel de agua refrigerante
-        if (canChangeWater && canChangeStationWater && (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow)))
-        {
-            ChangeWater();
-        }
-
-        // Actualiza el estado de la central nuclear
-        UpdateStationLevel();
-        
-        // Actualiza el color del indicador de energía
-        UpdateWaterIndicator();
-
-        // Gestiona el decremento de la Energía en función del tiempo
-        DecreaseWater();
+            
     }
 
     // Inicia los valores del indicador de agua refrigerante
@@ -95,12 +99,12 @@ public class WaterManager : MonoBehaviour
         if (waterLevel >= 90f)
         {
             waterColor = Color.red;
-            gameManager.SetFailures(10);
+            gameManager.SetFailures(14);
         }
         else if (waterLevel >= 80f)
         {
             waterColor = Color.yellow;
-            gameManager.SetFailures(1);
+            gameManager.SetFailures(10);
 
         }
         else if (waterLevel >= 40f)
@@ -110,12 +114,12 @@ public class WaterManager : MonoBehaviour
         else if (waterLevel >= 20f)
         {
             waterColor = Color.yellow;
-            gameManager.SetFailures(1);
+            gameManager.SetFailures(10);
         }
         else
         {
             waterColor = Color.red;
-            gameManager.SetFailures(10);
+            gameManager.SetFailures(14);
         }
         // Cambia el color del slider
         waterIndicator.fillRect.GetComponent<Image>().color = waterColor;
@@ -236,11 +240,11 @@ public class WaterManager : MonoBehaviour
     // Actualiza el estado de la central nuclear
     private void UpdateStationLevel()
     {
-        if(waterLevel > 99f || waterLevel < 1)
+        if (waterLevel >= 100f || waterLevel <= 0f)
         {
-            // Setea la cantidad de fallas para que explote la central nuclear
-            gameManager.SetFailures(5001);
-        }else gameManager.SetStationWaterLevel(waterLevel);
+            gameManager.SetExplotionstation(true);
+        }
+        gameManager.SetStationWaterLevel(waterLevel);
     }
 
 }

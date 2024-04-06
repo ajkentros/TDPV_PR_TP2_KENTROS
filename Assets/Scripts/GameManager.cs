@@ -7,17 +7,22 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private Slider stationIndicator;               // Variable referencia al slider de la central nuclear
+    [SerializeField] private Slider criticalIndicator;              // Variable referencia al slider del estado crítico de la central
     [SerializeField] private TextMeshProUGUI stationTextLevel;      // Variable referencia al texto del nivel de la central nuclear
     [SerializeField] private TextMeshProUGUI useTimeText;           // Variable referencia al texto del tiempo transcurrido sin fallas
     [SerializeField] private TextMeshProUGUI failuresText;          // Variable referencia al texto cantidad de fallas
 
     [SerializeField] private GameObject stationPanel;                // Variable referencia al StationPanel
     [SerializeField] private GameObject energyPanel;                 // Variable referencia al EnergyPanel
-    [SerializeField] private GameObject stationExplosionPanel;        // Variable referencia al StationExplosionPanel
+    [SerializeField] private GameObject waterPanel;                 // Variable referencia al EnergyPanel
+    [SerializeField] private GameObject maintenancePanel;                 // Variable referencia al EnergyPanel
+    [SerializeField] private GameObject stationExplosionPanel;       // Variable referencia al StationExplosionPanel
 
     private float stationLifeTime = 0f;                             // Variable tiempo de vida de la central nuclear sin fallas
     private float stationLevel = 0f;                                // Variable nivel de la central nuclear (valor de la energía + agua + mantenimiento)
+    private float criticalLevel = 0;                                // Variable nivel de la criticidad de la central nuclear (valor de la energía + agua + mantenimiento)
     private int failures = 0;                                       // Variable cantidad de fallas en la central nuclear
+    private const int maxFailures = 5000;                           // variable máximo de fallas
     private const float minEnergy = 0f;                             // Variable mínimo de la central nuclear
     private const float maxEnergy = 100f;                           // variable máximo de la central nuclear
     private float stationEnergyLevel = 0f;                          // Variable energía inicial
@@ -25,8 +30,10 @@ public class GameManager : MonoBehaviour
     private int hours = 0;                                          // Variable horas                              
     private int minutes = 0;                                        // Variable minutos    
     private int seconds = 0;                                        // Variable segundos    
-    private bool canChangeStationEnergy = true;                    // Variable para cambiar la Energía de la central nuclear
-    private bool canChangeStationWater = true;                    // Variable para cambiar el agua de la central nuclear
+    private bool canChangeStationEnergy = true;                     // Variable para cambiar la Energía de la central nuclear
+    private bool canChangeStationWater = true;                      // Variable para cambiar el agua de la central nuclear
+    private bool isGamePaused = false;                              // Variable para controlar la pausa del juego
+    private bool isExplotionStation = false;                        // Variable para saber si la cenral nuclear ha explotado
 
     // Start is called before the first frame update
     void Start()
@@ -37,7 +44,7 @@ public class GameManager : MonoBehaviour
         // Establece los valores minimos y máximos del indicador de Energía
         // Configura el slider de energía con los valores man y max
         InitStationIndicator();
-        UpdateStationIndicator();
+        UpdateStationIndicators();
     }
 
     // Update is called once per frame
@@ -46,8 +53,14 @@ public class GameManager : MonoBehaviour
         // Incrementa el tiempo de vida de la central nuclear sin fallas
         stationLifeTime += Time.deltaTime;
 
+        // Gestiona la pausa del juego
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePause();
+        }
+
         // Actualiza indicadores
-        UpdateStationIndicator();
+        UpdateStationIndicators();
 
         // Comprueba si hay alguna acción adicional que deba realizar el GameManager en función del estado del juego
         CheckGameState();
@@ -59,19 +72,27 @@ public class GameManager : MonoBehaviour
         // Activa los paneles
         stationPanel.SetActive(true);
         energyPanel.SetActive(true);
+        waterPanel.SetActive(true);
+        maintenancePanel.SetActive(true);
         stationExplosionPanel.SetActive(false);
 
         // Establece valores mínimo y máximo del indicador de nivel de la central nuclear en el slider
         stationIndicator.minValue = minEnergy;
         stationIndicator.maxValue = maxEnergy;
         stationIndicator.value = stationLevel;
+        criticalIndicator.value = criticalLevel;
     }
 
     // Configura el slider de energía con los valores man y max
-    void UpdateStationIndicator()
+    void UpdateStationIndicators()
     {
         // Actualiza el tamaño de la barra del slider según el nivel de energía
         stationIndicator.value = stationLevel;
+
+        // Actualiza el tamaño de la barra del slider según la criticidad de la central
+        criticalLevel = (float)failures / maxFailures * 360;
+        Debug.Log(" failures " +  failures + " criticalLevel " + criticalLevel);
+        criticalIndicator.value = criticalLevel;
 
         // Actualiza el texto de la barra del slider según el nivel de energía
         stationTextLevel.text = stationLevel.ToString("0") + "%";
@@ -89,6 +110,7 @@ public class GameManager : MonoBehaviour
 
         // Cambia el color del indicador de energía según el nivel de energía
         Color energyColor;
+        Color criticalColor = Color.red;
 
         if (stationLevel >= 95f)
         {
@@ -98,11 +120,11 @@ public class GameManager : MonoBehaviour
         {
             energyColor = Color.yellow;
         }
-        else if (stationLevel >= 15f)
+        else if (stationLevel >= 30f)
         {
             energyColor = Color.green;
         }
-        else if (stationLevel >= 10f)
+        else if (stationLevel >= 15f)
         {
             energyColor = Color.yellow;
         }
@@ -111,7 +133,10 @@ public class GameManager : MonoBehaviour
             energyColor = Color.red;
         }
         // Cambia el color del slider
-        stationIndicator.fillRect.GetComponent<Image>().color = energyColor; ;
+        stationIndicator.fillRect.GetComponent<Image>().color = energyColor;
+
+        // Colorea el slider dcriticidad de la central
+        criticalIndicator.fillRect.GetComponent<Image>().color = criticalColor;
     }
 
     // Chequea el estado de la central nuclear
@@ -124,12 +149,14 @@ public class GameManager : MonoBehaviour
          *      Reiniciar el juego
          */
         
-        if (stationLevel >= 95f || stationLevel < 2f || failures >= 5000)
+        if (stationLevel >= 95f || stationLevel < 10f || failures >= maxFailures || isExplotionStation)
         {
             stationPanel.SetActive(false);
             energyPanel.SetActive(false);
+            waterPanel.SetActive(false);
+            maintenancePanel.SetActive(false);
             stationExplosionPanel.SetActive(true);
-            Debug.Log("explotó");
+            //Debug.Log("explotó");
             Time.timeScale = 0f;    // Pausa el tiempo del juego
             ResetStation();
         }
@@ -154,6 +181,7 @@ public class GameManager : MonoBehaviour
     public void SetStationLevel()
     {
         stationLevel = stationEnergyLevel + stationWaterLevel;
+        
         //Debug.Log("stationLevel " + stationLevel);
     }
 
@@ -166,8 +194,11 @@ public class GameManager : MonoBehaviour
     // Set fallas en la central nuclear
     public void SetFailures(int _failures)
     {
-        failures += (int)(_failures / 10);
-        failures += _failures;
+        // Si no se pausa el juego => se calcula las fallas y la criticidad de la central nuclear
+        if(!isGamePaused)
+        {
+            failures += (int)(_failures * 0.1);
+        }
     }
 
     // Get fallas en la central nuclear
@@ -182,7 +213,7 @@ public class GameManager : MonoBehaviour
         stationLevel = 0;
         stationLifeTime = 0;
         failures = 0;
-        Debug.Log("restauración");
+        //Debug.Log("restauración");
     }
 
     public void ReturnMenu()
@@ -223,6 +254,27 @@ public class GameManager : MonoBehaviour
     public void SetChangeStationWater(bool _canChangeStationWater)
     {
         canChangeStationWater = _canChangeStationWater;
+    }
+
+    // Gestiona la pausa del juego
+    public void TogglePause()
+    {
+        // Si clic en escape =>, establece el timescale a 0
+        // Sino => estabablece el timescale a 1
+        isGamePaused = !isGamePaused;
+        Time.timeScale = isGamePaused ? 0f : 1f; 
+    }
+
+    // Get Game Pausado
+    public bool GetGamePaused()
+    {
+        return isGamePaused;
+    }
+
+    // Get ExplotionStation
+    public void SetExplotionstation(bool _explotionStation)
+    {
+        isExplotionStation = _explotionStation;
     }
 }
 
